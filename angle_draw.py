@@ -7,7 +7,7 @@ def draw_degree(degree):
 
 
     # Görsel boyutları
-    width, height = 800, 100
+    width, height = 600, 100
 
     # Göstermek istediğimiz merkez derece
     center_deg = degree
@@ -30,7 +30,7 @@ def draw_degree(degree):
         return deg
 
     # Yeni boş görsel oluştur (siyah zemin)
-    image = np.zeros((height, width, 3), dtype=np.uint8)
+    image = np.zeros((height, width, 4), dtype=np.uint8)
 
     # Her piksel başına kaç derece düşüyor (180 derece ekran genişliği)
     deg_per_pixel = 180 / width
@@ -45,7 +45,7 @@ def draw_degree(degree):
 
         # Her 60 derecede bir büyük işaret ve sayı
         if rounded_deg % 45 == 0:
-            cv2.line(image, (x, 30), (x, 70), (255, 255, 255), 2)
+            cv2.line(image, (x, 30), (x, 70), (255, 255, 255,1), 2)
             label = f"{rounded_deg}"
             # cv2.putText(image, label, (x - 10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
@@ -54,38 +54,38 @@ def draw_degree(degree):
             dir_text = str(dir_text)
             if dir_text:
                 # OpenCV image to PIL image
-                pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+                pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
                 draw = ImageDraw.Draw(pil_image)
 
                 # Load Arial font
                 font_path = "arial.ttf"  # Ensure the Arial font file is available in the same directory or provide the correct path
-                font = ImageFont.truetype(font_path, 16)
+                font = ImageFont.truetype(font_path, 24)  # Reduced font size for thinner text
 
                 # Draw text
-                draw.text((x - 10, 75), dir_text, font=font, fill=(255, 255, 255))
+                draw.text((x - 10, 75), dir_text, font=font, fill=(255, 255, 255,1))
 
                 # Convert back to OpenCV image
-                image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+                image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGRA)
         elif rounded_deg % 15 == 0:
                     # Eğer yön varsa ekle
             dir_text = deg_to_dir(rounded_deg)
             dir_text = str(dir_text)
             # Küçük işaret (her 10 derecede bir)
-            cv2.line(image, (x, 45), (x, 65), (150, 150, 150), 1)
+            cv2.line(image, (x, 45), (x, 65), (150, 150, 150,1), 1)
 
             # OpenCV image to PIL image
-            pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
             draw = ImageDraw.Draw(pil_image)
 
             # Load Arial font
             font_path = "arial.ttf"  # Ensure the Arial font file is available in the same directory or provide the correct path
-            font = ImageFont.truetype(font_path, 16)
+            font = ImageFont.truetype(font_path, 18)
 
             # Draw text
-            draw.text((x - 10, 75), dir_text, font=font, fill=(255, 255, 255))
+            draw.text((x - 10, 75), dir_text, font=font, fill=(255, 255, 255,1))
 
             # Convert back to OpenCV image
-            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGRA)
 
     # Merkezde 10 piksellik bir üçgen (kırmızı) ve 1 piksel siyah kenarlık
     triangle_points = np.array([
@@ -109,7 +109,7 @@ def draw_degree(degree):
 # Sonsuz döngü fonksiyonu
 def loop_draw_degree():
     while True:
-        for degree in range(0, 360):
+        for degree in range(0, 1):
             print(degree)
             # Dereceyi çiz
             image = draw_degree(degree)
@@ -118,7 +118,7 @@ def loop_draw_degree():
             cv2.imshow("Heading Indicator", image)
 
             # 0.1 saniye bekle
-            if cv2.waitKey(.1) & 0xFF == ord('q'):  # 'q' tuşuna basılırsa çık
+            if cv2.waitKey(1) & 0xFF == ord('q'):  # 'q' tuşuna basılırsa çık
                 cv2.destroyAllWindows()
                 return
 

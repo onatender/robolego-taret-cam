@@ -6,6 +6,13 @@ import datetime
 import screeninfo
 import numpy as np
 
+
+rifle_img = cv2.imread("resources/img/rifle.jpg", cv2.IMREAD_UNCHANGED)
+rifle_img = cv2.resize(rifle_img, (90, 27))
+cross_img = cv2.imread("resources/img/cross.png", cv2.IMREAD_UNCHANGED)
+cross_img = cv2.resize(cross_img, (128, 128))
+
+
 def find_available_cameras(max_devices=10):
     available = []
     for i in range(max_devices):
@@ -126,7 +133,7 @@ def draw_degree(degree):
 
 
     # Görsel boyutları
-    width, height = 800, 100
+    width, height = 600, 100
 
     # Göstermek istediğimiz merkez derece
     center_deg = degree
@@ -149,7 +156,7 @@ def draw_degree(degree):
         return deg
 
     # Yeni boş görsel oluştur (siyah zemin)
-    image = np.zeros((height, width, 3), dtype=np.uint8)
+    image = np.zeros((height, width, 4), dtype=np.uint8)
 
     # Her piksel başına kaç derece düşüyor (180 derece ekran genişliği)
     deg_per_pixel = 180 / width
@@ -164,7 +171,7 @@ def draw_degree(degree):
 
         # Her 60 derecede bir büyük işaret ve sayı
         if rounded_deg % 45 == 0:
-            cv2.line(image, (x, 30), (x, 70), (255, 255, 255), 2)
+            cv2.line(image, (x, 30), (x, 70), (255, 255, 255,1), 2)
             label = f"{rounded_deg}"
             # cv2.putText(image, label, (x - 10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
@@ -173,38 +180,38 @@ def draw_degree(degree):
             dir_text = str(dir_text)
             if dir_text:
                 # OpenCV image to PIL image
-                pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+                pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
                 draw = ImageDraw.Draw(pil_image)
 
                 # Load Arial font
                 font_path = "arial.ttf"  # Ensure the Arial font file is available in the same directory or provide the correct path
-                font = ImageFont.truetype(font_path, 16)
+                font = ImageFont.truetype(font_path, 24)  # Reduced font size for thinner text
 
                 # Draw text
                 draw.text((x - 10, 75), dir_text, font=font, fill=(255, 255, 255))
 
                 # Convert back to OpenCV image
-                image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+                image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGRA)
         elif rounded_deg % 15 == 0:
                     # Eğer yön varsa ekle
             dir_text = deg_to_dir(rounded_deg)
             dir_text = str(dir_text)
             # Küçük işaret (her 10 derecede bir)
-            cv2.line(image, (x, 45), (x, 65), (150, 150, 150), 1)
+            cv2.line(image, (x, 45), (x, 65), (150, 150, 150,1), 1)
 
             # OpenCV image to PIL image
-            pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
             draw = ImageDraw.Draw(pil_image)
 
             # Load Arial font
             font_path = "arial.ttf"  # Ensure the Arial font file is available in the same directory or provide the correct path
-            font = ImageFont.truetype(font_path, 16)
+            font = ImageFont.truetype(font_path, 18)
 
             # Draw text
             draw.text((x - 10, 75), dir_text, font=font, fill=(255, 255, 255))
 
             # Convert back to OpenCV image
-            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGRA)
 
     # Merkezde 10 piksellik bir üçgen (kırmızı) ve 1 piksel siyah kenarlık
     triangle_points = np.array([
@@ -214,10 +221,10 @@ def draw_degree(degree):
     ], np.int32)
 
     # Çizgi kenarlığı (siyah)
-    cv2.polylines(image, [triangle_points], isClosed=True, color=(0, 0, 0), thickness=1)
+    cv2.polylines(image, [triangle_points], isClosed=True, color=(0, 0, 0,1), thickness=1)
 
     # Üçgenin içini doldur (beyaz)
-    cv2.fillPoly(image, [triangle_points], (255, 255, 255))
+    cv2.fillPoly(image, [triangle_points], (255, 255, 255,1))
 
     # # Görseli kaydet
     # output_path = "heading_indicator_317deg.png"
@@ -226,22 +233,87 @@ def draw_degree(degree):
     # output_path
     return image
 
+def draw_vertical_degree(degree):
+# Görsel boyutları (dikey)
+    width, height = 140, 300
+
+    center_deg = degree
+
+    def deg_to_dir(deg):
+        directions = {
+            0: 'N',
+            45: 'NE',
+            90: 'E',
+            135: 'SE',
+            180: 'S',
+            225: 'SW',
+            270: 'W',
+            315: 'NW'
+        }
+        deg = deg % 360
+        # if deg % 45 == 0:
+        #     return directions[deg]
+        return deg
+
+    image = np.zeros((height, width, 4), dtype=np.uint8)
+
+    # Her piksel başına kaç derece düşüyor (180 derece ekran yüksekliği)
+    deg_per_pixel = 180 / height
+    start_deg = center_deg - 90
+
+    for y in range(height):
+        current_deg = (start_deg + y * deg_per_pixel) % 360
+        rounded_deg = int(round(current_deg))
+
+        if rounded_deg % 45 == 0:
+            cv2.line(image, (30, y), (70, y), (255, 255, 255,1), 2)
+
+            dir_text = str(deg_to_dir(rounded_deg))
+
+            # OpenCV → PIL
+            pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
+            draw = ImageDraw.Draw(pil_image)
+            font = ImageFont.truetype("arial.ttf", 24)
+            draw.text((75, y - 10), dir_text, font=font, fill=(255, 255, 255))  # Text sağa
+            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGRA)
+
+        elif rounded_deg % 15 == 0:
+            cv2.line(image, (45, y), (65, y), (150, 150, 150,1), 1)
+
+    # Merkezde kırmızı üçgen gösterge
+    triangle_points = np.array([
+        (15, height // 2),
+        (0, height // 2 - 5),
+        (0, height // 2 + 5)
+    ], np.int32)
+
+    cv2.polylines(image, [triangle_points], isClosed=True, color=(0, 0, 0,1), thickness=1)
+    cv2.fillPoly(image, [triangle_points], (255, 255, 255,1))
+
+    return image
+
+    
+
 def draw_overlay(frame):
     height, width = frame.shape[:2]
     green = (0, 255, 0)
     red = (0, 0, 255)
 
-    angle_scale_img = draw_angle_scale(display_data["X_ANGLE"])  # Örnek açı değeri
+    # angle_scale_img = draw_angle_scale(display_data["X_ANGLE"])  # Örnek açı değeri
+    angle_scale_img = draw_degree(display_data["X_ANGLE"])  # Örnek açı değeri
     scale_h, scale_w, _ = angle_scale_img.shape
     overlay = frame[0:scale_h + 0, (width - scale_w) // 2:(width + scale_w) // 2]
-    mask = angle_scale_img > 0
-    overlay[mask] = angle_scale_img[mask]
+    mask = angle_scale_img[:, :, 3] > 0  # Opacity kanalına bakarak maske oluştur
+    angle_scale_img_3d = cv2.cvtColor(angle_scale_img, cv2.COLOR_BGRA2BGR)  # 3 boyutlu bir görsele çevir
+    overlay[mask] = angle_scale_img_3d[mask]
 
-    angle_scale_img = draw_vertical_angle_scale(display_data["Y_ANGLE"])  # Örnek açı değeri
+    # angle_scale_img = draw_vertical_angle_scale(display_data["Y_ANGLE"])  # Örnek açı değeri
+    angle_scale_img = draw_vertical_degree(display_data["Y_ANGLE"])  # Örnek açı değeri
     scale_h, scale_w, _ = angle_scale_img.shape
-    overlay = frame[70:scale_h+70, 0:scale_w]  # Ekranın soluna yasla
-    mask = angle_scale_img > 0
-    overlay[mask] = angle_scale_img[mask]
+    overlay = frame[200:scale_h+200, 0:scale_w]  # Ekranın soluna yasla
+    mask = angle_scale_img[:, :, 3] > 0  # Opacity kanalına bakarak maske oluştur
+    angle_scale_img_3d = cv2.cvtColor(angle_scale_img, cv2.COLOR_BGRA2BGR)  # 3 boyutlu bir görsele çevir
+    overlay[mask] = angle_scale_img_3d[mask]
 
     text = "Mod: Termal\n" \
            f"Distance: {display_data['DISTANCE']}m\n" \
@@ -272,13 +344,27 @@ def draw_overlay(frame):
     cv2.putText(frame, f"{display_data['EAST']}E", (width - 120, height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     # Çembersel crosshair çiz
+    # center_x, center_y = width // 2, height // 2
+    # radius = 6
+    # thickness = 1
+    # color = (0, 255, 0)  # Yeşil renk
+    # cv2.circle(frame, (center_x, center_y), radius, color, thickness)
+    # cv2.line(frame, (center_x - radius, center_y), (center_x + radius, center_y), color, thickness)
+    # cv2.line(frame, (center_x, center_y - radius), (center_x, center_y + radius), color, thickness)
+
+    # Cross image overlay
+    cross_h, cross_w, _ = cross_img.shape
     center_x, center_y = width // 2, height // 2
-    radius = 6
-    thickness = 1
-    color = (0, 255, 0)  # Yeşil renk
-    cv2.circle(frame, (center_x, center_y), radius, color, thickness)
-    cv2.line(frame, (center_x - radius, center_y), (center_x + radius, center_y), color, thickness)
-    cv2.line(frame, (center_x, center_y - radius), (center_x, center_y + radius), color, thickness)
+    cross_x = center_x - cross_w // 2
+    cross_y = center_y - cross_h // 2
+
+    # Create a mask for the cross image based on its alpha channel
+    cross_mask = cross_img[:, :, 3] > 0  # Check if alpha channel is greater than 0
+    cross_img_rgb = cross_img[:, :, :3]  # Extract RGB channels
+
+    # Overlay the cross image on the frame using the mask
+    for c in range(3):  # Iterate over color channels (B, G, R)
+        frame[cross_y:cross_y + cross_h, cross_x:cross_x + cross_w, c][cross_mask] = cross_img_rgb[:, :, c][cross_mask]
 
     # cv2.drawMarker(frame, (width // 2, height // 2), green, cv2.MARKER_CROSS, 20, 1)
     text = "Rounds: 50\nNamlu Yuklu\nAtis Hazir"
@@ -291,6 +377,39 @@ def draw_overlay(frame):
     for i, line in enumerate(lines):
         cv2.putText(frame, line, (15, height - box_height - 5 + i * (text_height + baseline) + text_height-10), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+    
+    # Rifle image overlay
+    rifle_h, rifle_w, _ = rifle_img.shape
+    rifle_x = 10  # Left margin
+    rifle_y = height - rifle_h - 70  # Bottom margin
+    frame[rifle_y:rifle_y + rifle_h, rifle_x:rifle_x + rifle_w] = rifle_img
+
+    # Add "35mm" text to the right of the rifle image
+    text = "35mm"
+    (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)
+    text_x = rifle_x + rifle_w + 10  # Position to the right of the rifle image
+    text_y = rifle_y + rifle_h // 2 + text_height // 2  # Vertically center the text with the image
+    cv2.rectangle(frame, 
+                  (text_x - 5, text_y - text_height - baseline - 5), 
+                  (text_x + text_width + 5, text_y + baseline + 5), 
+                  (255, 255, 255), 
+                  -1)  # White background
+    cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)  # Black text
+
+    # Display satellite position at the bottom-right corner
+    satellite_text = f"UYDU KONUMU\nX:{display_data['SATELLITE_X']}\nY:{display_data['SATELLITE_Y']}"
+    (text_width, text_height), baseline = cv2.getTextSize(satellite_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+    lines = satellite_text.split("\n")
+    max_line_width = max(cv2.getTextSize(line, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0][0] for line in lines)
+    box_width = max_line_width + 10
+    box_height = (text_height + baseline) * len(lines) + 10
+    cv2.rectangle(frame, (width - box_width , height - box_height - 90), (width - 10, height - 10), (0, 0, 0), -1)
+    for i, line in enumerate(lines):
+        cv2.putText(frame, line, (width - box_width + 5, height - box_height - 70 + i * (text_height + baseline)), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        
+
 
     text = "ÇIKIŞ İÇİN (ESC)"
     (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
@@ -343,10 +462,12 @@ def run_camera(index):
 
     while True:
         ret, frame = cap.read()
+        frame = cv2.imread("tank.jpg")
         frame = cv2.resize(frame, (1280, 720))
         if not ret:
             break
         print(frame.shape)
+
         frame = draw_overlay(frame)
         full_frame = resize_with_aspect_ratio(frame, screen_w, screen_h)
         cv2.imshow("Tam Ekran Arayüz", full_frame)
@@ -392,19 +513,23 @@ display_data = {
     "EAST": 26.1151,
     "DISTANCE": 120,
     "X_ANGLE": 0,
-    "Y_ANGLE": 60
+    "Y_ANGLE": 60,
+    "SATELLITE_X": 3.3,
+    "SATELLITE_Y": 2.5,
 }
 
 def update_angle():
-    global display_data
+    global display_data      
     while True:
         for angle in range(-180, 181, 30):
-            display_data["X_ANGLE"] = angle
-            display_data["Y_ANGLE"] = angle
-            display_data["NORTH"] = round(random.uniform(0, 180), 4)
-            display_data["EAST"] = round(random.uniform(0, 180), 4)
-            display_data["DISTANCE"] = round(random.uniform(0, 150), 2)
-            time.sleep(0.5)
+            display_data["NORTH"] = round(random.uniform(0, 180), 1)
+            display_data["EAST"] = round(random.uniform(0, 180), 1)
+            display_data["DISTANCE"] = round(random.uniform(0, 150), 1)
+
+            display_data["X_ANGLE"] = (display_data["X_ANGLE"] + 1)%360
+            display_data["Y_ANGLE"] = (display_data["Y_ANGLE"] + 1)%360
+            time.sleep(0.1)
+
 
 threading.Thread(target=update_angle, daemon=True).start()
 start_gui()
