@@ -397,18 +397,20 @@ def draw_overlay(frame):
                   -1)  # White background
     cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)  # Black text
 
-    # Display satellite position at the bottom-right corner
+    # Display satellite position at the bottom-right corner, with a vertical margin of 90px
     satellite_text = f"UYDU KONUMU\nX:{display_data['SATELLITE_X']}\nY:{display_data['SATELLITE_Y']}"
     (text_width, text_height), baseline = cv2.getTextSize(satellite_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
     lines = satellite_text.split("\n")
     max_line_width = max(cv2.getTextSize(line, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0][0] for line in lines)
     box_width = max_line_width + 10
     box_height = (text_height + baseline) * len(lines) + 10
-    cv2.rectangle(frame, (width - box_width , height - box_height - 90), (width - 10, height - 10), (0, 0, 0), -1)
+    box_x = width - box_width - 10
+    box_y = height - box_height - 90  # Vertical margin of 90px
+    cv2.rectangle(frame, (box_x, box_y), (box_x + box_width, box_y + box_height), (0, 0, 0), -1)
     for i, line in enumerate(lines):
-        cv2.putText(frame, line, (width - box_width + 5, height - box_height - 70 + i * (text_height + baseline)), 
+        cv2.putText(frame, line, (box_x + 5, box_y + 15 + i * (text_height + baseline)), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        
+    
 
 
     text = "ÇIKIŞ İÇİN (ESC)"
@@ -525,6 +527,8 @@ def update_angle():
             display_data["NORTH"] = round(random.uniform(0, 180), 1)
             display_data["EAST"] = round(random.uniform(0, 180), 1)
             display_data["DISTANCE"] = round(random.uniform(0, 150), 1)
+            display_data["SATELLITE_X"] = round(random.uniform(0, 150), 1)
+            display_data["SATELLITE_Y"] = round(random.uniform(0, 150), 1)
 
             display_data["X_ANGLE"] = (display_data["X_ANGLE"] + 1)%360
             display_data["Y_ANGLE"] = (display_data["Y_ANGLE"] + 1)%360
